@@ -1,12 +1,12 @@
 from dataclasses import dataclass
-from decimal import Decimal, ROUND_HALF_UP
+import math
 import sys
+import time
 
-
-@dataclass
+@dataclass(slots=True)
 class StationStatistics():
     count: int
-    sum: float
+    sum: int
     maxNum: float
     minNum: float
 
@@ -16,17 +16,17 @@ def main(fileName: str = "measurements.txt"):
     
     with open(fileName, "r", encoding="utf-8") as f:
         for line in f:
-            splitLine: list[str] = line.strip().split(";")
+            splitLine: list[str] = line.split(";")
             stationName: str = splitLine[0]
             cleanedNum: float = float(splitLine[1])
 
             if stationName not in stationMap:
-                stationStats: StationStatistics = StationStatistics(1, cleanedNum, cleanedNum, cleanedNum)
+                stationStats: StationStatistics = StationStatistics(1, int(cleanedNum*10), cleanedNum, cleanedNum)
                 stationMap[stationName] = stationStats
             else:
                 stationStats = stationMap[stationName]
                 stationStats.count += 1
-                stationStats.sum += cleanedNum
+                stationStats.sum += int(cleanedNum * 10)
                 stationStats.maxNum = max(stationStats.maxNum, cleanedNum)
                 stationStats.minNum = min(stationStats.minNum, cleanedNum)
 
@@ -39,19 +39,21 @@ def main(fileName: str = "measurements.txt"):
 
         endChar: str = ", " if i < totalStations - 1 else "}"
 
-        decSum: Decimal = Decimal(str(stationStats.sum))
-        decCount: Decimal = Decimal(str(stationStats.count))
-        decAverage: Decimal = decSum / decCount
-        decAverageRounded: Decimal = decAverage.quantize(Decimal("0.1"), rounding=ROUND_HALF_UP)
+        regAverage: float = math.floor((stationStats.sum / stationStats.count) + 0.5) / 10
 
-        print(f"{station}={round(stationStats.minNum,1)}/{decAverage}/{round(stationStats.maxNum, 1)}", end = endChar)
+        print(f"{station}={round(stationStats.minNum,1)}/{regAverage}/{round(stationStats.maxNum, 1)}", end = endChar)
+
 
 
 if __name__ == "__main__":
+    startTime = time.perf_counter()
     if len(sys.argv) > 1:
         fileName: str = sys.argv[1]
         main(fileName)
     else:
         main()
+    endTime = time.perf_counter()
+    if sys.stdout.isatty():
+        print(f"\nTook {endTime - startTime} seconds")
 
     

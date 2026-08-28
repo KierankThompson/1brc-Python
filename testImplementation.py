@@ -3,12 +3,16 @@ import sys
 import subprocess
 from pathlib import Path
 import argparse
-from typing import Sequence, Optional, Any
+from typing import Sequence, Optional
+import os
+
+
+envVars = os.environ.copy()
+envVars["PYTHONIOENCODING"] = "utf-8"
 
 def getTestCases() -> tuple[list[str], list[str]]:
     testCaseDir: Path = Path("testCases")
 
-    
     inputFileNames: list[str] = [file.name for file in testCaseDir.glob("*.txt") if file.is_file()]
     outputFileNames: list[str] = [file.name for file in testCaseDir.glob("*.out") if file.is_file()]
 
@@ -43,12 +47,13 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
         if args.verbose:
             print(f"Testing {testCase}")
 
-        cmd = [sys.executable, '-u', codeFile, f"testCases/{testCase}"]
+        cmd: list[str] = [sys.executable, '-u', codeFile, f"testCases/{testCase}"]
+        
         try:
             runProcess: subprocess.CompletedProcess[str] = subprocess.run(cmd, 
-                                                                          text=True, capture_output=True, timeout=120, 
+                                                                          text=True, capture_output=True, timeout=5, 
                                                                           encoding="utf-8",
-                                                                          errors="replace")
+                                                                          env=envVars)
 
             testCaseEnd: float = time.time()
             elapsedTime: float = round(testCaseEnd - testCaseStart, 4)
@@ -59,12 +64,13 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
             if args.verbose:
                 print(f"Took {elapsedTime} seconds")
                 if len(expectedOutput) > 500:
-                    print(f"Testcase too long to output, {"got right" if expectedOutput == testCaseOutput else "got wrong"}")
+                    print(f"Testcase too long to output, {'got right' if expectedOutput == testCaseOutput else 'got wrong'}")
                 else:
                     print(f"Expected {expectedOutput}\nGot {testCaseOutput}")
             
         except Exception as e:
-            print(e)
+            if args.verbose:
+                print(e)
             testCaseResults.append((False,))
 
         if args.verbose:
@@ -77,9 +83,6 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
             print(f"{inputFileNames[idx]}: Took {result[1]} and failed")
         else:
             print(f"{inputFileNames[idx]}: Took {result[1]} and passed")
-
-
-
 
 
 if __name__ == "__main__":
