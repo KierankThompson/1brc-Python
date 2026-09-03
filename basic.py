@@ -11,7 +11,7 @@ class StationStatistics():
     minNum: float
 
 
-def main(fileName: str = "measurements.txt"):
+def main(fileName: str = "measurements.txt") -> None:
     stationMap: dict[str, StationStatistics] =  {}
     
     with open(fileName, "r", encoding="utf-8") as f:

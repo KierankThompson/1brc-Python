@@ -13,7 +13,7 @@ class StationStatistics():
 
 
 
-def main(fileName: str = "measurements.txt"):
+def main(fileName: str = "measurements.txt") -> None:
     stationMap: dict[bytes, StationStatistics] =  {}
     
     with open(fileName, "r+b") as f:
@@ -34,7 +34,7 @@ def main(fileName: str = "measurements.txt"):
                     newlinePos = fileSize
 
                 byteNum: bytes = m[semiPos+1:newlinePos]
-
+                
                 sign: int = 1
                 startIdx: int = 0
             
@@ -43,11 +43,12 @@ def main(fileName: str = "measurements.txt"):
                     startIdx = 1
             
                 #b'0' is 48
-                if len(byteNum) - startIdx == 4:
-                    cleanedNum: int = sign * ((byteNum[startIdx] - 48) * 100 + (byteNum[startIdx + 1] - 48) * 10 + (byteNum[startIdx + 3] - 48))
+                if byteNum[startIdx + 1] == 46: #Check if first char after number is '.'
+                    #528 = b'0' * 11
+                    cleanedNum: int = sign * ((byteNum[startIdx] * 10 + byteNum[startIdx + 2]) - 528) 
                 else:
-                    cleanedNum = sign * ((byteNum[startIdx] - 48) * 10 + (byteNum[startIdx + 2] - 48))
-                    
+                    #5328 = b'0' * 111
+                    cleanedNum: int = sign * ((byteNum[startIdx] * 100 + byteNum[startIdx + 1] * 10 + byteNum[startIdx + 3]) - 5328) 
                 try:
                     stationStats: StationStatistics = stationMap[stationName]
                     stationStats.count += 1
